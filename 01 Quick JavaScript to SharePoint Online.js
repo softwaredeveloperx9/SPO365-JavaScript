@@ -48,36 +48,37 @@ function getFileBuffer(p_fileInput) {
 function get_FormDigestValue(p_webAbsoluteUrl){
 	let result = '';
 	
-	try
-	{
-		let obj = {};
-		
-		$.ajax({
-			url: p_webAbsoluteUrl + '/_api/contextinfo',
-			type: "POST",
-			headers: {
-				"accept": "application/json;odata=verbose",
-				"content-Type": "application/json;odata=verbose"
-			},
-            async:false,
-			success: function (xyz) {
-				obj = xyz;
-			},
-			error: function (error) {
-				//obj = error;
-			}
-		});
-		
-		result = obj.d.GetContextWebInformation['FormDigestValue'];
-	}
-	catch (err){}
+    let obj = {};
+    
+    $.ajax({
+        url: p_webAbsoluteUrl + '/_api/contextinfo',
+        type: "POST",
+        headers: {
+            "accept": "application/json;odata=verbose",
+            "content-Type": "application/json;odata=verbose"
+        },
+        async:false,
+        beforeSend: function() {
+            console.log(new Date().toISOString() + ' Start: REST api ContextInfo');
+        },
+        complete: function() {
+            console.log(new Date().toISOString() + ' Complete: REST api ContextInfo');
+        },
+        success: function (data) {
+            obj = data;
+        },
+        error: function (error) {
+            //obj = error;
+        }
+    });
+    
+    result = obj.d.GetContextWebInformation['FormDigestValue'];
 	
 	return result;
 }
 
 // Add the file to the file collection in the Shared Documents folder.
 function addFileToFolder(arrayBuffer, p_fileInput, p_webAbsoluteUrl, p_serverRelativeUrlToFolder) {
-    // Get the file name from the file input control on the page.
     let parts = p_fileInput[0].value.split('\\');
     let fileName = parts[parts.length - 1];
 
@@ -94,7 +95,13 @@ function addFileToFolder(arrayBuffer, p_fileInput, p_webAbsoluteUrl, p_serverRel
                 },
                 contentType: "application/json;odata=verbose",
                 data: arrayBuffer,
-                processData: false
+                processData: false,
+                beforeSend: function() {
+                    console.log(new Date().toISOString() + ' Start: upload file to SharePoint');
+                },
+                complete: function() {
+                    console.log(new Date().toISOString() + ' Complete: upload file to SharePoint');
+                }
             });
 }
 
@@ -104,10 +111,16 @@ function uploadFile(){
     let serverRelativeUrlToFolder = 'shared documents';
     let fileInput = jQuery('#getFile');
 
-    getFileBuffer(fileInput).then(function (arrayBuffer){
+    if (fileInput[0].files.length <= 0){
+        alert('File is empty');
+
+        return;
+    }
+
+    getFileBuffer(fileInput).done(function (arrayBuffer){
         let addFile = addFileToFolder(arrayBuffer, fileInput, webAbsoluteUrl, serverRelativeUrlToFolder);
         addFile.done(function (file, status, xhr){
-            console.log('Success upload file');
+            console.log(new Date().toISOString() + ' Success upload file');
         });
     });
 }
@@ -118,13 +131,13 @@ var js = 'https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js';
 
 get_File_JavaScript(js);
 
-// clear "Content"
+// clear "article"
 $('article').html('');
 
+// create FORM for Upload file
 var html_Upload = `
-    <div>
-        <input id="getFile" type="file"/><br />
-        <input id="displayName" type="text" value="Enter a unique name" /><br />
+    <div style="margin:20px 50px;">
+        <input id="getFile" type="file"/><br /><br />
         <input id="addFileButton" type="button" value="Upload" onclick="uploadFile()"/>
     </div>
 `;
