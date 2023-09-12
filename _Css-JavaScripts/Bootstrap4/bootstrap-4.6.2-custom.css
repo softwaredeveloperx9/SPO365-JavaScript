@@ -1,0 +1,8 @@
+.form-control{
+    box-shadow: none !important;
+    padding-bottom: 8px !important;
+}
+
+.custom-select{
+    box-shadow: none !important;
+}
