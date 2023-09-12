@@ -1,0 +1,33 @@
+/*section.mainContent {
+    display: block !important;
+}
+
+section.mainContent > article{
+    display:block !important;
+}*/
+
+.CanvasComponent > div > div > div > div {
+    /*background-color: rgb(72, 72, 72) !important;*/
+	max-width: 100% !important;
+	width: 100% !important;
+	/*min-height: 500px !important;*/
+}
+
+.CanvasSection
+, .CanvasZone {
+	padding: 0px !important;
+}
+
+.ControlZone{
+	margin: 0px !important;
+	padding: 0px !important;
+}
+/*
+.control-sidebar.control-sidebar-open+.control-sidebar-bg{
+    top: 250px !important;
+    right: 17px !important;
+}*/
+
+div[data-automation-id="pageHeader"] {
+    display:none !important;
+}
