@@ -1,7 +1,10 @@
 /*
     Author      : SDR - Software DevelopeR
     Description : utility related with SharePoint REST API
+                  https://github.com/softwaredeveloperx9/SPO365-JavaScript/tree/main/_Css-JavaScripts/SharePointOnline365
 */
+
+// many usage of pattern in jquery.deferred.promise.js from https://gist.github.com/pbojinov/ca377fd51c69531a8029
 
 // https://github.com/SharePoint/sp-dev-docs/blob/main/docs/spfx/overview-graphhttpclient.md
 //      To acquire a valid access token,
@@ -57,7 +60,7 @@ async function SDR_AccessToken(){
 
 */
 
-function validate_AccessToken(accessToken){
+function validate_AccessTokenAsync(accessToken){
     let deferred = $.Deferred();
     
     let url = "https://graph.microsoft.com/v1.0/me";
@@ -86,7 +89,7 @@ function validate_AccessToken(accessToken){
 // Immediately-invoked Function Expression (IIFE)
 (async () => {
     var accessToken = await SDR_AccessToken();
-    var data = await validate_AccessToken(accessToken);
+    var data = await validate_AccessTokenAsync(accessToken);
     
     console.log(data);
 })();
@@ -194,42 +197,60 @@ function waitformeFunc(delay_millisec) {
 (async () => {
     console.log('-- delayFunc()');
     console.log('Delay 2.000 ms ...');
+    console.log(new Date().toISOString());
     await delayFunc(2000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
     console.log('Delay 3.000 ms ...');
+    console.log(new Date().toISOString());
     await delayFunc(3000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
     console.log('Delay 5.000 ms ...');
+    console.log(new Date().toISOString());
     await delayFunc(5000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
     console.log('-- sleeperFunc()');
     console.log('Delay 2.000 ms ...');
+    console.log(new Date().toISOString());
     await sleeperFunc(2000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
     console.log('Delay 3.000 ms ...');
+    console.log(new Date().toISOString());
     await sleeperFunc(3000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
     console.log('Delay 5.000 ms ...');
+    console.log(new Date().toISOString());
     await sleeperFunc(5000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
     console.log('-- waitformeFunc()');
     console.log('Delay 2.000 ms ...');
+    console.log(new Date().toISOString());
     await waitformeFunc(2000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
     console.log('Delay 3.000 ms ...');
+    console.log(new Date().toISOString());
     await waitformeFunc(3000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
     console.log('Delay 5.000 ms ...');
+    console.log(new Date().toISOString());
     await waitformeFunc(5000);
     console.log('Complete.');
+    console.log(new Date().toISOString());
     
 })();
 
@@ -445,7 +466,7 @@ function getData_POST(url, data){
 }
 
 // https://learn.microsoft.com/en-us/answers/questions/787712/retrieve-all-fields-in-sharepoint-list-using-jquer
-
+//
 function allData_toCSV(data){
     let results = data.d.results;
         
@@ -488,6 +509,8 @@ function allData_toCSV(data){
 
 */
 
+// https://sharepoint.stackexchange.com/questions/148226/send-e-mail-from-javascript-using-rest-api
+//
 async function sendEmailAsync(from, to, body, subject, webUrl){
     let deferred = $.Deferred();
     
@@ -571,6 +594,8 @@ async function sendEmailAsync(from, to, body, subject, webUrl){
 
 */
 
+// https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/working-with-lists-and-list-items-with-rest
+//
 async function addListItemAsync(webUrl, listName, dataObj){
     let deferred = $.Deferred();
     
@@ -877,6 +902,7 @@ function arrayRange(start, stop, step){
 */
 
 // https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/working-with-lists-and-list-items-with-rest#create-list-item-in-a-folder
+//
 async function addFolder_toList(webUrl, listName, folderName){
     let deferred = $.Deferred();
     
@@ -1327,7 +1353,7 @@ function SiteUsers_by_Ids(fields, ids, limit, orderby, webUrl){
 */
 
 // https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/working-with-folders-and-files-with-rest
-
+//
 async function Folder_Create(webUrl, documentLibrary, folderName){
     let formDigestValue = await formDigestValueAsync(webUrl);
     
@@ -1652,7 +1678,7 @@ async function getDocumentLibrary_FilesFoldersAsync(webUrl, documentLibrary, fil
 */
 
 // https://sharepoint.stackexchange.com/questions/138135/get-all-files-and-folders-in-one-call
-
+//
 async function getDocumentLibrary_RecursiveAsync(webUrl, documentLibrary, folder, viewXml, fields, filter, limit, orderby){
     let deferred = $.Deferred();
     
@@ -1856,6 +1882,7 @@ async function getDocumentLibrary_RecursiveAsync(webUrl, documentLibrary, folder
 // https://sharepoint.stackexchange.com/questions/208020/make-caml-query-with-in-rest-api-call
 //  - limitation of REST URL (endpoint) of 260 characters
 //  - Caml Query in Body
+//
 async function getDocumentLibrary_RecursiveAsync_inBody(webUrl, documentLibrary, folder, viewXml, fields, filter, limit, orderby){
     let deferred = $.Deferred();
     
@@ -1911,14 +1938,12 @@ async function getDocumentLibrary_RecursiveAsync_inBody(webUrl, documentLibrary,
         v_viewXml = viewXml;
     }
     
-    
     var data = { 'query':
                             {
                                 '__metadata': { 'type': 'SP.CamlQuery' },
                                 'ViewXml': v_viewXml.ViewXml
                             }
                 };
-                        
     
     let url = webUrl + `/_api/web/Lists/GetByTitle('${documentLibrary}')/GetItems?${param_select}${param_top}${param_filter}${param_orderby}`;
     
@@ -2036,7 +2061,7 @@ async function getDocumentLibrary_RecursiveAsync_inBody(webUrl, documentLibrary,
 
 // https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/upload-a-file-by-using-the-rest-api-and-jquery
 // https://www.c-sharpcorner.com/blogs/upload-documents-show-documents-in-a-page-using-sharepoint-rest-api
-
+//
 // Get the local file as an array buffer.
 function getFileBuffer(file) {
     let deferred = $.Deferred();
@@ -2169,6 +2194,45 @@ function uploadFile(){
     
     console.log('-- end');
 }
+
+uploadFile();
+
+// simple Function, calling await to Function_Async()
+//
+function uploadFile_versionX(){
+    (async () => {
+        console.log('Trying to upload file...');
+        console.log(new Date().toISOString());
+        
+        if (confirm("Read to upload file ?\nEither OK or Cancel.")){
+            
+            var webUrl = _spPageContextInfo.webServerRelativeUrl;
+            
+            var documentLibrary = 'Shared Documents';
+            var folder = 'abc/def/ghi/x1';
+            
+            console.log('Before calling function to Upload');
+            console.log(new Date().toISOString());
+            
+            var data = await uploadFileToFolderAsync(webUrl, $("#txtFile")[0].files[0], documentLibrary, folder);
+            
+            if (data){
+                data = _spPageContextInfo.portalUrl + data;
+                data = data.replace('.com//', '.com/');
+            }
+            
+            console.log(data);
+            
+            console.log('After calling');
+            console.log(new Date().toISOString());
+        }
+        
+        console.log('End of function');
+        console.log(new Date().toISOString());
+    })();
+}
+
+uploadFile_versionX();
 
 */
 
