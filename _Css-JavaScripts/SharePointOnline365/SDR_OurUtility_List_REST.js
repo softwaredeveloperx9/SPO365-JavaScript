@@ -443,6 +443,95 @@ function getData_GET(url){
 
 */
 
+function getData_GET_X(url){
+    let retFunction = {};
+    
+    let deferred = $.Deferred();
+    
+    $.ajax({
+        url: url,
+        type: "GET",
+        headers: {
+            "accept": "application/json;odata=verbose",
+            "content-Type": "application/json;odata=verbose"
+        }
+    })
+    .done(function(result) {
+        try{
+            retFunction = result;
+        }catch(e){}
+        
+        deferred.resolve(retFunction);
+    })
+    .fail(function(result, status) {
+        //deferred.reject(status);
+        
+        // avoid: "Uncaught (in promise)"
+        // resolve with return function:
+        
+        retFunction = {
+            d: {results:[]},
+            'error': result.responseJSON.error.message.value
+        };
+        
+        deferred.resolve(retFunction);
+    });
+    
+    return deferred.promise();
+}
+
+/*
+// Test:
+
+// Immediately-invoked Function Expression (IIFE)
+(async () => {
+    var listName = 'Person';
+    
+    var webUrl = _spPageContextInfo.webServerRelativeUrl;
+    var url = webUrl + `/_api/web/lists/GetByTitle('${listName}')/items?$select=ID,Name,Created`;
+    
+    var data = await getData_GET_X(url);
+    
+    console.log(data);
+})();
+
+(async () => {
+    // kolom AttachmentFiles
+    // di 2 tempat, yaitu:
+    //      1. $select=AttachmentFiles
+    //      2. $expand=AttachmentFiles
+    var url = "/sites/Workspaces/Testing/_api/lists/getByTitle('List with Attachment')/items?$select=AttachmentFiles,Title,Age,Skills&$expand=AttachmentFiles";
+    
+    var data = await getData_GET_X(url);
+    
+    console.log(data);
+})();
+
+(async () => {
+    var listName = 'Person-not-exists';
+    
+    var webUrl = _spPageContextInfo.webServerRelativeUrl;
+    var url = webUrl + `/_api/web/lists/GetByTitle('${listName}')/items?$select=ID,Name,Created`;
+    
+    var data = await getData_GET_X(url);
+    
+    console.log(data);
+})();
+
+(async () => {
+    // kolom AttachmentFiles
+    // di 2 tempat, yaitu:
+    //      1. $select=AttachmentFiles
+    //      2. $expand=AttachmentFiles
+    var url = "/sites/Workspaces/Testing/_api/lists/getByTitle('List with Attachment-not-exists')/items?$select=AttachmentFiles,Title,Age,Skills&$expand=AttachmentFiles";
+    
+    var data = await getData_GET_X(url);
+    
+    console.log(data);
+})();
+
+*/
+
 function getData_POST(url, data){
     let deferred = $.Deferred();
     
