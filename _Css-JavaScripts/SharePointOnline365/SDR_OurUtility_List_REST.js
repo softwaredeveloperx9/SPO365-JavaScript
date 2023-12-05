@@ -11,6 +11,9 @@
 //      GraphHttpClient issues a web request to the /_api/SP.OAuth.Token/Acquire endpoint. 
 //      This API is intended for internal use. You should not communicate with it directly in your solutions.
 //
+
+var SDR_JS_Version_OurUtility = '2023-12-05 12:54';
+
 async function SDR_AccessToken(){
     let deferred = $.Deferred();
     
@@ -59,6 +62,14 @@ async function SDR_AccessToken(){
 })();
 
 */
+
+function SDR_AccessToken_print(){
+    (async() => {
+        let data = await SDR_AccessToken();
+        
+        console.log(data);
+    })();
+}
 
 function validate_AccessTokenAsync(accessToken){
     let deferred = $.Deferred();
@@ -129,6 +140,26 @@ async function accessToken_Today(){
 })();
 
 */
+
+function accessToken_Today_Reset(p_data){
+    
+    try{
+        //if (p_data['statusText'] != "Unauthorized") return;
+            
+        //let date = new Date().toISOString().replace(/[\-\:\.]/g, "");
+        let date = new Date().toISOString();
+        //let today = date.substring(0, 10);
+        let today = date.substring(0, 13);
+        
+        let key = "AccessToken_" + today;
+        
+        let accessToken = '';
+        
+        localStorage.setItem(key, accessToken);
+        
+        console.log('Reset: ' + key);
+    }catch(e){}
+}
 
 function formDigestValueAsync(webUrl){
     let deferred = $.Deferred();
@@ -281,7 +312,11 @@ function getListItemsAsync(webUrl, listName, fields, filter, limit, orderby){
     
     let param_orderby = '';
     if (orderby){
-        param_orderby = '&$orderby=' + orderby + ' asc';
+        param_orderby = '&$orderby=' + orderby;
+        
+        if ( ! param_orderby.endsWith(' asc') && ! param_orderby.endsWith(' desc')){
+            param_orderby += ' asc';
+        }
     }
     
     let url = webUrl + `/_api/web/lists/getbytitle('${listName}')/items?${param_select}${param_top}${param_filter}${param_orderby}`;
@@ -387,6 +422,74 @@ async function get_Type_SPdata(webUrl, listName){
     var webUrl = _spPageContextInfo.webServerRelativeUrl;
     
     var data = await get_Type_SPdata(webUrl, listName);
+    
+    console.log(data);
+})();
+
+*/
+
+function getListItems_FieldsAsync(webUrl, listName, fields, filter, limit, orderby){
+    let deferred = $.Deferred();
+    
+    let param_select = '$select=*';
+    if (fields){
+        param_select = '$select=' + fields;
+    }
+    
+    let param_top = '';
+    if (limit){
+        param_top = '&$top=' + limit;
+    }
+    
+    // https://support.shortpoint.com/support/solutions/articles/1000307202-shortpoint-rest-api-selecting-filtering-sorting-results-in-a-sharepoint-list
+    
+    let param_filter = '';
+    if (filter){
+        param_filter = '&$filter=' + filter;
+    }
+    
+    let param_orderby = '';
+    if (orderby){
+        param_orderby = '&$orderby=' + orderby + ' asc';
+    }
+    
+    let url = webUrl + `/_api/web/lists/getbytitle('${listName}')/fields?${param_select}${param_top}${param_filter}${param_orderby}`;
+    
+    $.ajax({
+        url : url,
+        type: "GET",
+        contentType : "application/json;odata=verbose",
+        headers: {
+            "accept": "application/json;odata=verbose",
+            "content-Type": "application/json;odata=verbose"
+        }
+    })
+    .done(function(result) {
+        deferred.resolve(result);
+    })
+    .fail(function(result, status) {
+        deferred.reject(status);
+    });
+    
+    return deferred.promise();
+}
+
+/*
+// Test: 
+
+// Immediately-invoked Function Expression (IIFE)
+(async () => {
+    var webUrl = _spPageContextInfo.webServerRelativeUrl;
+    var listName = 'Person';
+    
+    var fields = '';
+    
+    var filter = "EntityPropertyName eq 'Skills'";
+    
+    var limit = '';
+    var orderby = '';
+    
+    var data = await getListItems_FieldsAsync(webUrl, listName, fields, filter, limit, orderby);
     
     console.log(data);
 })();
@@ -685,13 +788,17 @@ async function sendEmailAsync(from, to, body, subject, webUrl){
 
 // https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/working-with-lists-and-list-items-with-rest
 //
-async function addListItemAsync(webUrl, listName, dataObj){
+async function addListItemAsync(webUrl, listName, dataObj, byReference){
     let deferred = $.Deferred();
     
     let url = webUrl + `/_api/web/lists/GetByTitle('${listName}')/items`;
     
     let formDigestValue = await formDigestValueAsync(webUrl);
     let listItem_Type = await get_Type_SPdata(webUrl, listName);
+    
+    if (byReference){
+        byReference.formDigestValue = formDigestValue;
+    }
     
     dataObj['__metadata'] = {'type': listItem_Type};
     
@@ -710,6 +817,67 @@ async function addListItemAsync(webUrl, listName, dataObj){
     })
     .fail(function(result, status) {
         deferred.reject(status);
+    });
+    
+    return deferred.promise();
+}
+
+async function addListItemAsyncX(webUrl, listName, dataObj, byReference){
+    let retFunction = {};
+    
+    let deferred = $.Deferred();
+    
+    let url = webUrl + `/_api/web/lists/GetByTitle('${listName}')/items`;
+    
+    let formDigestValue = await formDigestValueAsync(webUrl);
+    let listItem_Type = await get_Type_SPdata(webUrl, listName);
+    
+    if (byReference){
+        byReference.formDigestValue = formDigestValue;
+    }
+    
+    dataObj['__metadata'] = {'type': listItem_Type};
+    
+    $.ajax({
+        url: url,
+        type: "POST",
+        headers: {
+            "accept": "application/json;odata=verbose",
+            "content-Type": "application/json;odata=verbose",
+            "X-RequestDigest": formDigestValue
+        },
+        data: JSON.stringify(dataObj)
+    })
+    .done(function(result) {
+        try{
+            retFunction = {
+                ok: true,
+                result: result,
+                'error': ''
+            };
+        }catch(e){
+            retFunction = {
+                ok: false,
+                result: {},
+                'error': e
+            };
+        }
+        
+        deferred.resolve(retFunction);
+    })
+    .fail(function(resultx, status) {
+        //deferred.reject(status);
+        
+        // avoid: "Uncaught (in promise)"
+        // resolve with return function:
+        console.log(resultx);
+        retFunction = {
+            ok: false,
+            result: {},
+            'error': resultx.responseText
+        };
+        
+        deferred.resolve(retFunction);
     });
     
     return deferred.promise();
@@ -757,6 +925,46 @@ async function updateListItemAsync(webUrl, listName, id, dataObj){
     
     let formDigestValue = await formDigestValueAsync(webUrl);
     let listItem_Type = await get_Type_SPdata(webUrl, listName);
+    
+    dataObj['__metadata'] = {'type': listItem_Type};
+    
+    $.ajax({
+        url: url,
+        type: "POST",
+        headers: {
+            "accept": "application/json;odata=verbose",
+            "content-Type": "application/json;odata=verbose",
+            "IF-MATCH": "*",
+            "X-HTTP-Method": "MERGE",
+            "X-RequestDigest": formDigestValue
+        },
+        data: JSON.stringify(dataObj)
+    })
+    .done(function(result) {
+        if (result){
+            deferred.resolve(result);
+        }else{
+            deferred.resolve(true);
+        }
+    })
+    .fail(function(result, status) {
+        deferred.reject(status);
+    });
+    
+    return deferred.promise();
+}
+
+async function updateListItemAsyncX(webUrl, listName, id, dataObj, byReference){
+    let deferred = $.Deferred();
+    
+    let url = webUrl + `/_api/web/lists/GetByTitle('${listName}')/items(${id})`;
+    
+    let formDigestValue = await formDigestValueAsync(webUrl);
+    let listItem_Type = await get_Type_SPdata(webUrl, listName);
+    
+    if (byReference){
+        byReference.formDigestValue = formDigestValue;
+    }
     
     dataObj['__metadata'] = {'type': listItem_Type};
     
@@ -1443,8 +1651,10 @@ function SiteUsers_by_Ids(fields, ids, limit, orderby, webUrl){
 
 // https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/working-with-folders-and-files-with-rest
 //
-async function Folder_Create(webUrl, documentLibrary, folderName){
-    let formDigestValue = await formDigestValueAsync(webUrl);
+async function Folder_Create(webUrl, documentLibrary, folderName, formDigestValue){
+    if ( ! formDigestValue){
+        formDigestValue = await formDigestValueAsync(webUrl);
+    }
     
     let folders = folderName.split('/');
     let n = folders.length;
@@ -1669,7 +1879,11 @@ function getDocumentLibrary_ItemsAsync(webUrl, documentLibrary, fields, filter, 
     
     let param_orderby = '';
     if (orderby){
-        param_orderby = '&$orderby=' + orderby + ' asc';
+        param_orderby = '&$orderby=' + orderby;
+        
+        if ( ! param_orderby.endsWith(' asc') && ! param_orderby.endsWith(' desc')){
+            param_orderby += ' asc';
+        }
     }
     
     // do not forget to add webUrl in parameter function GetFolderByServerRelativeUrl()
@@ -2169,14 +2383,16 @@ function getFileBuffer(file) {
     return deferred.promise();
 }
 
-async function uploadFileToFolderAsync(webUrl, file, documentLibrary, folder){
+async function uploadFileToFolderAsync(webUrl, file, documentLibrary, folder, formDigestValue){
     let retFunction = '';
     
     let deferred = $.Deferred();
     
-    let formDigestValue = await formDigestValueAsync(webUrl);
+    if ( ! formDigestValue){
+        formDigestValue = await formDigestValueAsync(webUrl);
+    }
     
-    let arrayBuffer = getFileBuffer(file);
+    let arrayBuffer = await getFileBuffer(file);
     
     let v_folder = '';
     if (folder){
@@ -2195,7 +2411,7 @@ async function uploadFileToFolderAsync(webUrl, file, documentLibrary, folder){
             "accept": "application/json;odata=verbose",
             "X-RequestDigest": formDigestValue
         },
-        data: getFileBuffer,
+        data: arrayBuffer,
         processData: false
     })
     .done(function(result) {
@@ -2325,14 +2541,16 @@ uploadFile_versionX();
 
 */
 
-async function uploadFileToListItemAsync(webUrl, file, listName, id){
+async function uploadFileToListItemAsync(webUrl, file, listName, id, formDigestValue){
     let retFunction = '';
     
     let deferred = $.Deferred();
     
-    let formDigestValue = await formDigestValueAsync(webUrl);
+    if ( ! formDigestValue){
+        formDigestValue = await formDigestValueAsync(webUrl);
+    }
     
-    let arrayBuffer = getFileBuffer(file);
+    let arrayBuffer = await getFileBuffer(file);
     
     let fileName = file.name;
     
@@ -2345,7 +2563,7 @@ async function uploadFileToListItemAsync(webUrl, file, listName, id){
             "accept": "application/json;odata=verbose",
             "X-RequestDigest": formDigestValue
         },
-        data: getFileBuffer,
+        data: arrayBuffer,
         processData: false
     })
     .done(function(result) {
@@ -2388,3 +2606,89 @@ async function uploadFileToListItemAsync(webUrl, file, listName, id){
 })();
 
 */
+
+function msGraphUsersAsync(p_accessToken, fields, filter, limit, orderby){
+    let deferred = $.Deferred();
+    
+    let param_select = '$select=displayName,mail,userPrincipalName,businessPhones,officeLocation,jobTitle,mobilePhone,companyName,department,streetAddress,city,state&$expand=manager';
+    if (fields){
+        param_select = '$select=' + fields;
+    }
+    
+    let param_top = '';
+    if (limit){
+        param_top = '&$top=' + limit;
+    }
+    
+    let param_filter = '';
+    if (filter){
+        param_filter = `&$search="displayName:${filter}"`;
+        
+        // https://learn.microsoft.com/en-us/graph/aad-advanced-queries?view=graph-rest-1.0&tabs=http#query-scenarios-that-require-advanced-query-capabilities
+        // $expand is not currently supported with advanced queries
+        param_select = param_select.replace('&$expand=manager', '');
+    }
+    
+    let param_orderby = '';
+    if (orderby){
+        param_orderby = '&$orderby=' + orderby;
+        
+        if ( ! param_orderby.endsWith(' asc') && ! param_orderby.endsWith(' desc')){
+            param_orderby += ' asc';
+        }
+    }
+    if (filter){
+        // Sorting not supported for Filtering
+        //param_orderby = '';
+    }
+    
+    let url = `https://graph.microsoft.com/v1.0/users?${param_select}${param_top}${param_filter}${param_orderby}`;
+    
+    $.ajax({
+        url : url,
+        type: "GET",
+        contentType : "application/json;odata=verbose",
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + p_accessToken,
+            'x-peoplequery-querysources': 'Mailbox,Directory',
+            ConsistencyLevel: "eventual"
+        },
+    })
+    .done(function(result) {
+        deferred.resolve(result);
+    })
+    .fail(function(result, status) {
+        deferred.reject(status);
+    });
+    
+    return deferred.promise();
+}
+
+/*
+// Test:
+
+// Immediately-invoked Function Expression (IIFE)
+(async () => {
+    var accessToken = await accessToken_Today();
+    
+    var data = await msGraphUsersAsync(accessToken);
+    console.log(data);
+})();
+
+*/
+
+function msGraph_Me_print(accessToken) {
+    let url = "https://graph.microsoft.com/v1.0/me";
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken
+        }
+    })
+    .then(result => result.json())
+    .then(result_JSON => console.log(result_JSON));
+}
